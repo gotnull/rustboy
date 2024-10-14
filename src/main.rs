@@ -34,7 +34,7 @@ fn main() {
         graphics.render_tile_map(&mmu);
 
         // Render the graphics to the screen
-        graphics.render(&mmu);
+        graphics.render();
 
         // Update audio and input
         audio.update();

@@ -52,7 +52,7 @@ impl Graphics {
     }
 
     // Render the current frame from the framebuffer
-    pub fn render(&mut self, mmu: &crate::mmu::MMU) {
+    pub fn render(&mut self) {
         let mut texture = self
             .texture_creator
             .create_texture_streaming(PixelFormatEnum::RGB24, SCREEN_WIDTH, SCREEN_HEIGHT)
@@ -97,36 +97,69 @@ impl Graphics {
         false
     }
 
-    // Convert color ID to RGB (placeholder palette)
+    // Convert color ID to RGB (using placeholder palette)
     fn get_color_from_palette(&self, color_id: u8) -> (u8, u8, u8) {
         match color_id {
             0 => (255, 255, 255), // White
             1 => (192, 192, 192), // Light gray
             2 => (96, 96, 96),    // Dark gray
             3 => (0, 0, 0),       // Black
-            _ => (255, 255, 255), // Fallback to white
+            _ => (255, 255, 255), // Default to white
         }
     }
 
     // Render a single tile at the given position in the framebuffer
-    pub fn render_tile(&mut self, tile_data: [[u8; 8]; 8], x: u32, y: u32) {
+    pub fn render_tile(&mut self, tile_data: [u8; 16], x: u32, y: u32) {
         for ty in 0..8 {
+            let byte1 = tile_data[ty * 2];
+            let byte2 = tile_data[ty * 2 + 1];
             for tx in 0..8 {
-                let color_id = tile_data[ty][tx];
+                let color_bit = 7 - tx;
+                let color_id = ((byte1 >> color_bit) & 1) | (((byte2 >> color_bit) & 1) << 1);
                 let (r, g, b) = self.get_color_from_palette(color_id);
                 self.set_pixel(x + tx as u32, y + ty as u32, r, g, b);
             }
         }
     }
 
-    // Render the tile map to the screen (for now, render the first 20x18 tiles)
+    // Render the tile map to the screen (for now, render the first 20x18 tiles from the tile map)
     pub fn render_tile_map(&mut self, mmu: &crate::mmu::MMU) {
         for tile_y in 0..18 {
             for tile_x in 0..20 {
-                let tile_index = (tile_y * 20 + tile_x) as u16; // Just a simple sequential tile index for now
-                let tile_data = mmu.get_tile_data(tile_index);
+                let tile_index = mmu.get_tile_index_from_map(tile_x, tile_y); // Fetch the tile index from the map
+                let tile_data = mmu.get_tile_data(tile_index); // Fetch the tile data using the tile index
+
+                // Print which tile index is being rendered
+                // println!(
+                //     "Rendering tile at position ({}, {}): Tile Index = {}",
+                //     tile_x, tile_y, tile_index
+                // );
+
                 self.render_tile(tile_data, (tile_x * 8) as u32, (tile_y * 8) as u32);
             }
         }
+    }
+
+    // Fetch tile index from the background map
+    fn fetch_tile_index(&self, tile_x: u32, tile_y: u32, mmu: &crate::mmu::MMU) -> u8 {
+        let tile_map_base = 0x9800; // Example address for background map
+        let map_x = tile_x as usize;
+        let map_y = tile_y as usize;
+
+        // Get the tile index from the background map in VRAM
+        mmu.read_byte(tile_map_base + (map_y * 32 + map_x) as u16)
+    }
+
+    // Fetch tile data from VRAM based on the tile index
+    fn fetch_tile_data(&self, tile_index: u8, mmu: &crate::mmu::MMU) -> [u8; 16] {
+        let tile_data_base = 0x8000; // Example address for tile data
+        let tile_address = tile_data_base + (tile_index as u16) * 16;
+
+        // Fetch 16 bytes of tile data (8x8 pixels, 2 bytes per row)
+        let mut tile_data = [0; 16];
+        for i in 0..16 {
+            tile_data[i] = mmu.read_byte(tile_address + i as u16);
+        }
+        tile_data
     }
 }

@@ -12,6 +12,6 @@ impl Input {
 
     pub fn poll(&mut self) {
         // Placeholder for polling input
-        println!("Polling input");
+        // println!("Polling input");
     }
 }

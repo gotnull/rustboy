@@ -12,6 +12,6 @@ impl Audio {
 
     pub fn update(&mut self) {
         // Placeholder for audio updates
-        println!("Updating audio");
+        // println!("Updating audio");
     }
 }
