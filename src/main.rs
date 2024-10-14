@@ -16,17 +16,36 @@ fn main() {
     let rom_path = std::env::args().nth(1).expect("Please provide a ROM file.");
     mmu.load_rom(rom_path);
 
+    let frame_duration = std::time::Duration::from_millis(16); // Roughly 60 FPS
+
     // Main emulation loop
     loop {
-        // Execute CPU cycles
+        let frame_start = std::time::Instant::now();
+
+        // Handle events (quit if needed)
+        if graphics.handle_events() {
+            break; // Exit the loop if the user closes the window
+        }
+
+        // Execute CPU cycles (placeholder for now)
         cpu.step(&mut mmu);
 
-        // Update graphics, audio and input
+        // For testing: Set a few pixels to random colors
+        graphics.set_pixel(10, 10, 255, 0, 0); // Red
+        graphics.set_pixel(20, 20, 0, 255, 0); // Green
+        graphics.set_pixel(30, 30, 0, 0, 255); // Blue
+
+        // Render the graphics to the screen
         graphics.render(&mmu);
+
+        // Update audio and input (placeholders for now)
         audio.update();
         input.poll();
 
-        // Handle timing for the Gameboy Color's clock (4194304 Hz)
-        std::thread::sleep(std::time::Duration::from_micros(1)); // Adjust based on cycles per frame
+        // Limit frame rate to ~60 FPS
+        let frame_time = frame_start.elapsed();
+        if frame_time < frame_duration {
+            std::thread::sleep(frame_duration - frame_time);
+        }
     }
 }
