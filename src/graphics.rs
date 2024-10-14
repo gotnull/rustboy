@@ -96,4 +96,37 @@ impl Graphics {
         }
         false
     }
+
+    // Convert color ID to RGB (placeholder palette)
+    fn get_color_from_palette(&self, color_id: u8) -> (u8, u8, u8) {
+        match color_id {
+            0 => (255, 255, 255), // White
+            1 => (192, 192, 192), // Light gray
+            2 => (96, 96, 96),    // Dark gray
+            3 => (0, 0, 0),       // Black
+            _ => (255, 255, 255), // Fallback to white
+        }
+    }
+
+    // Render a single tile at the given position in the framebuffer
+    pub fn render_tile(&mut self, tile_data: [[u8; 8]; 8], x: u32, y: u32) {
+        for ty in 0..8 {
+            for tx in 0..8 {
+                let color_id = tile_data[ty][tx];
+                let (r, g, b) = self.get_color_from_palette(color_id);
+                self.set_pixel(x + tx as u32, y + ty as u32, r, g, b);
+            }
+        }
+    }
+
+    // Render the tile map to the screen (for now, render the first 20x18 tiles)
+    pub fn render_tile_map(&mut self, mmu: &crate::mmu::MMU) {
+        for tile_y in 0..18 {
+            for tile_x in 0..20 {
+                let tile_index = (tile_y * 20 + tile_x) as u16; // Just a simple sequential tile index for now
+                let tile_data = mmu.get_tile_data(tile_index);
+                self.render_tile(tile_data, (tile_x * 8) as u32, (tile_y * 8) as u32);
+            }
+        }
+    }
 }

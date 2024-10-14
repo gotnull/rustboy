@@ -27,18 +27,16 @@ fn main() {
             break; // Exit the loop if the user closes the window
         }
 
-        // Execute CPU cycles (placeholder for now)
+        // Execute CPU cycles
         cpu.step(&mut mmu);
 
-        // For testing: Set a few pixels to random colors
-        graphics.set_pixel(10, 10, 255, 0, 0); // Red
-        graphics.set_pixel(20, 20, 0, 255, 0); // Green
-        graphics.set_pixel(30, 30, 0, 0, 255); // Blue
+        // Render the tile map from VRAM
+        graphics.render_tile_map(&mmu);
 
         // Render the graphics to the screen
         graphics.render(&mmu);
 
-        // Update audio and input (placeholders for now)
+        // Update audio and input
         audio.update();
         input.poll();
 
